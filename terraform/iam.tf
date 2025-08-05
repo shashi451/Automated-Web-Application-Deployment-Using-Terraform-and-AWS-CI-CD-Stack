@@ -167,3 +167,28 @@ resource "aws_iam_role_policy_attachment" "codebuild_admin" {
   role       = aws_iam_role.codebuild_role.name
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
 }
+
+
+# terraform/iam.tf (ADD THIS TO THE END)
+
+# Custom policy to allow CodeBuild to read the Docker Hub secret from Secrets Manager
+resource "aws_iam_policy" "codebuild_secrets_policy" {
+  name = "${var.project_name}-codebuild-secrets-policy"
+  policy = jsonencode({
+    Version   = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = "secretsmanager:GetSecretValue",
+        # PASTE THE SECRET ARN YOU COPIED HERE
+        Resource = "arn:aws:secretsmanager:us-east-1:235494795848:secret:dockerhub-credentials-jih0FG" 
+      }
+    ]
+  })
+}
+
+# Attach the new policy to the CodeBuild role
+resource "aws_iam_role_policy_attachment" "codebuild_secrets_attach" {
+  role       = aws_iam_role.codebuild_role.name
+  policy_arn = aws_iam_policy.codebuild_secrets_policy.arn
+}

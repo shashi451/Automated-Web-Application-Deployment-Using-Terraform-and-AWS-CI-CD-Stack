@@ -3,22 +3,22 @@ version: 0.2
 phases:
   install:
     commands:
-      - echo "Installing dependencies and Terraform..."
-      - yum install -y unzip
+      - echo "Installing dependencies..."
+      - yum install -y unzip jq
+      - echo "Installing Terraform..."
       - TERRAFORM_VERSION="1.5.7" 
-      # Create and use a temporary directory to avoid name conflicts
-      - mkdir -p /tmp/tf-install
-      - cd /tmp/tf-install
-      # Download and unzip inside the temp directory
       - wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
       - unzip -o terraform_${TERRAFORM_VERSION}_linux_amd64.zip
-      # Move the terraform executable to a location in the system's PATH
       - sudo mv terraform /usr/local/bin/
-      # IMPORTANT: Change back to the original source code directory for subsequent phases
       - cd $CODEBUILD_SRC_DIR
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
+      # --- NEW DOCKER HUB LOGIN COMMANDS ---
+      - echo "Logging in to Docker Hub..."
+      # PASTE THE SECRET ARN YOU COPIED HERE
+      - aws secretsmanager get-secret-value --secret-id <PASTE_YOUR_SECRET_ARN_HERE> --query SecretString --output text | docker login --username $(jq -r .username) --password-stdin
+      # --- ECR LOGIN COMMANDS ---
+      - echo "Logging in to Amazon ECR..."
       - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - IMAGE_REPO_NAME="my-devops-app"
