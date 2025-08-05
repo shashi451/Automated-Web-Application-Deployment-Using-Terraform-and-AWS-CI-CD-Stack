@@ -3,8 +3,12 @@ version: 0.2
 phases:
   install:
     commands:
+      - echo "Installing dependencies..."
+      # Add these two lines to update package lists and install the unzip utility
+      - apt-get update
+      - apt-get install -y unzip
       - echo "Installing Terraform..."
-      - TERRAFORM_VERSION="1.5.7" # Using a specific version of Terraform
+      - TERRAFORM_VERSION="1.5.7" 
       - wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
       - unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
       - sudo mv terraform /usr/local/bin/
