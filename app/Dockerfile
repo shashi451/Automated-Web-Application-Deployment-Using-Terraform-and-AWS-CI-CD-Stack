@@ -1,13 +1,18 @@
+# Use a lightweight Python base image
 FROM python:3.9-slim
-#setting working directory
+
+# Set the working directory in the container
 WORKDIR /app
-#copying all the files
+
+# Copy application files
 COPY . .
 
-RUN pip install Flask
+# Install dependencies, including the gunicorn web server
+RUN pip install Flask gunicorn
 
-# Exposing port 5000
-EXPOSE 5000
+# Expose port 80 to the outside world
+EXPOSE 80
 
-# Running the application
-CMD ["python", "main.py"]
+# Command to run the application using gunicorn on port 80
+# This tells gunicorn to run the 'app' object from the 'main.py' file
+CMD ["gunicorn", "--bind", "0.0.0.0:80", "main:app"]
