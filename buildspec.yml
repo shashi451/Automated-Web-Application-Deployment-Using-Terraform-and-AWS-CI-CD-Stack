@@ -3,19 +3,13 @@ version: 0.2
 phases:
   install:
     commands:
-      - echo "Installing dependencies and Terraform..."
+      - echo "Installing dependencies..."
       - yum install -y unzip
-      - TERRAFORM_VERSION="1.5.7"
-      # Create a temporary directory to avoid name conflicts
-      - mkdir /tmp/tf-install
-      - cd /tmp/tf-install
-      # Download and unzip inside the temp directory
+      - echo "Installing Terraform..."
+      - TERRAFORM_VERSION="1.5.7" 
       - wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
-      - unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
-      # Move the terraform executable to a location in the system's PATH
+      - unzip -o terraform_${TERRAFORM_VERSION}_linux_amd64.zip
       - sudo mv terraform /usr/local/bin/
-      # IMPORTANT: Change back to the original source code directory for subsequent phases
-      - cd $CODEBUILD_SRC_DIR
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
@@ -33,14 +27,15 @@ phases:
   post_build:
     commands:
       - echo Build completed on `date`
-      - echo Pushing the Docker image to ECR...
-      - docker push $IMAGE_REPO_URI:$IMAGE_TAG
-      - echo Applying Terraform infrastructure...
+      # --- COMMANDS RE-ORDERED HERE ---
+      - echo "Applying Terraform infrastructure first to ensure ECR repo exists..."
       - cd terraform
       - terraform init
       - terraform apply -auto-approve
-      - echo Creating imagedefinitions.json for CodeDeploy...
       - cd ..
+      - echo "Now, pushing the Docker image to ECR..."
+      - docker push $IMAGE_REPO_URI:$IMAGE_TAG
+      - echo "Creating imagedefinitions.json for CodeDeploy..."
       - printf '[{"name":"my-devops-app-container","imageUri":"%s"}]' $IMAGE_REPO_URI:$IMAGE_TAG > imagedefinitions.json
 
 artifacts:
