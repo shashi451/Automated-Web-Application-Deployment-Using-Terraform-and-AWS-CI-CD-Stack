@@ -1,7 +1,15 @@
 # terraform/main.tf
+# terraform/main.tf
 
 # Configure the Terraform AWS Provider
 terraform {
+  # ADD THIS BACKEND BLOCK
+  backend "s3" {
+    bucket = "my-devops-tfstate-bucket-shashi12345" # <-- REPLACE WITH YOUR UNIQUE BUCKET NAME
+    key    = "global/s3/terraform.tfstate"
+    region = "us-east-1"
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -9,6 +17,8 @@ terraform {
     }
   }
 }
+
+# ... the rest of your file remains the same
 
 # Set the provider to use the region from our variables file
 provider "aws" {
