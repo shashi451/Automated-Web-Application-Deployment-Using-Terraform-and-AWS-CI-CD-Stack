@@ -50,3 +50,36 @@ resource "aws_iam_role_policy_attachment" "codedeploy_main" {
   role       = aws_iam_role.codedeploy_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
+
+# terraform/iam.tf (ADD THIS TO THE END)
+
+# This policy grants permission to get objects from our CodePipeline S3 bucket
+resource "aws_iam_policy" "s3_access" {
+  name        = "${var.project_name}-s3-access-policy"
+  description = "Allows reading from the CodePipeline artifact bucket"
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:GetObject",
+          "s3:GetObjectVersion"
+        ],
+        Resource = "${aws_s3_bucket.codepipeline_artifacts.arn}/*"
+      },
+      {
+        Effect   = "Allow",
+        Action   = "s3:ListBucket",
+        Resource = aws_s3_bucket.codepipeline_artifacts.arn
+      }
+    ]
+  })
+}
+
+# Attach the new S3 access policy to our EC2 instance role
+resource "aws_iam_role_policy_attachment" "s3_access" {
+  role       = aws_iam_role.ec2_instance_role.name
+  policy_arn = aws_iam_policy.s3_access.arn
+}
