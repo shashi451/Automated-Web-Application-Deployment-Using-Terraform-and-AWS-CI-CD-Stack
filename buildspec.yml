@@ -1,16 +1,18 @@
 version: 0.2
 
 phases:
-  pre_build:
-    commands:
-      - echo Logging in to Amazon ECR...
-      # These environment variables (AWS_ACCOUNT_ID, AWS_DEFAULT_REGION) are provided by the CodeBuild environment
-      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      # Set up some variables for the image repository
-      - IMAGE_REPO_NAME="my-devops-app" # This must match the ECR repo name in your terraform code
-      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7) # Use the first 7 chars of the git commit hash as the image tag
-      - IMAGE_REPO_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
-
+  # NEW AND IMPROVED - USE THIS
+pre_build:
+  commands:
+    - echo Logging in to Amazon ECR...
+    # This new line dynamically gets the account ID and stores it in a variable
+    - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+    # The login command now uses the variable we just created
+    - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+    - IMAGE_REPO_NAME="my-devops-app" # This must match the ECR repo name in your terraform code
+    - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+    - IMAGE_REPO_URI=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/$IMAGE_REPO_NAME
+      
   build:
     commands:
       - echo Build started on `date`
