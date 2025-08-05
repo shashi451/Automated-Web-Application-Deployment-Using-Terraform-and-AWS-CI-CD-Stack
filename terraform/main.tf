@@ -19,11 +19,17 @@ terraform {
 }
 
 # ... the rest of your file remains the same
+# terraform/main.tf (ADD THIS NEAR THE TOP)
 
-# Set the provider to use the region from our variables file
 provider "aws" {
   region = var.aws_region
 }
+
+# Add these two data sources
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+
 
 # Get the list of Availability Zones in the current region
 # This makes our code reusable in any region

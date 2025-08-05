@@ -22,25 +22,21 @@ resource "aws_iam_instance_profile" "ec2_instance_profile" {
 
 # --- Policies Attached to EC2 Role ---
 
-# Allows CodeDeploy agent to work
 resource "aws_iam_role_policy_attachment" "ec2_codedeploy_access" {
   role       = aws_iam_role.ec2_instance_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSCodeDeployRole"
 }
 
-# Allows SSM Session Manager to connect for debugging
 resource "aws_iam_role_policy_attachment" "ec2_ssm_access" {
   role       = aws_iam_role.ec2_instance_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
 }
 
-# Allows EC2 instance to pull images from ECR
 resource "aws_iam_role_policy_attachment" "ec2_ecr_access" {
   role       = aws_iam_role.ec2_instance_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
-# Custom policy to allow reading from the CodePipeline S3 artifact bucket
 resource "aws_iam_policy" "s3_access_policy" {
   name        = "${var.project_name}-s3-access-policy"
   description = "Allows reading from the CodePipeline artifact bucket"
@@ -130,15 +126,18 @@ resource "aws_iam_policy" "codepipeline_policy" {
           "codedeploy:CreateDeployment",
           "codedeploy:GetApplication",
           "codedeploy:GetDeployment",
-          "codedeploy:GetDeploymentConfig",
           "codedeploy:GetDeploymentGroup",
           "codedeploy:RegisterApplicationRevision"
         ],
-        # THIS IS THE CORRECTED PART - Using .arn for both resources
         Resource = [
           aws_codedeploy_app.main.arn,
           aws_codedeploy_deployment_group.main.arn
         ]
+      },
+      {
+        Effect   = "Allow",
+        Action   = "codedeploy:GetDeploymentConfig",
+        Resource = "arn:aws:codedeploy:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:deploymentconfig:*"
       }
     ]
   })
