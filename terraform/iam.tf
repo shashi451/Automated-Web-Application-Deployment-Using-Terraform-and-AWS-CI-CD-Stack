@@ -83,3 +83,10 @@ resource "aws_iam_role_policy_attachment" "s3_access" {
   role       = aws_iam_role.ec2_instance_role.name
   policy_arn = aws_iam_policy.s3_access.arn
 }
+
+
+# Attach the policy that allows the EC2 instance to pull images from ECR
+resource "aws_iam_role_policy_attachment" "ecr_access" {
+  role       = aws_iam_role.ec2_instance_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+}
