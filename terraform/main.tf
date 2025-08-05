@@ -143,6 +143,7 @@ resource "aws_security_group" "app" {
 # The ECR repository where our Docker images will be stored
 resource "aws_ecr_repository" "app" {
   name = var.project_name
+  force_delete = true
 }
 
 # terraform/main.tf (APPEND THIS CODE)
@@ -151,6 +152,7 @@ resource "aws_ecr_repository" "app" {
 # -----------------------------------------------------------------------------
 resource "aws_s3_bucket" "codepipeline_artifacts" {
   bucket = "${var.project_name}-codepipeline-artifacts-${random_id.bucket_id.hex}"
+  force_destroy = true
   # Bucket names must be globally unique, so we add a random suffix
 }
 

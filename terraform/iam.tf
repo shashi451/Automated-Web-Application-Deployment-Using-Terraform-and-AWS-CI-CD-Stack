@@ -90,3 +90,78 @@ resource "aws_iam_role_policy_attachment" "ecr_access" {
   role       = aws_iam_role.ec2_instance_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
+
+# IAM ROLE FOR CODEPIPELINE
+# -----------------------------------------------------------------------------
+resource "aws_iam_role" "codepipeline_role" {
+  name = "${var.project_name}-codepipeline-role"
+
+  assume_role_policy = jsonencode({
+    Version   = "2012-10-17",
+    Statement = [{
+      Action    = "sts:AssumeRole",
+      Effect    = "Allow",
+      Principal = { Service = "codepipeline.amazonaws.com" }
+    }]
+  })
+}
+
+resource "aws_iam_policy" "codepipeline_policy" {
+  name   = "${var.project_name}-codepipeline-policy"
+  policy = jsonencode({
+    Version   = "2012-10-17",
+    Statement = [
+      {
+        Effect   = "Allow",
+        Action   = ["s3:GetObject", "s3:PutObject", "s3:ListBucket"],
+        Resource = [
+          aws_s3_bucket.codepipeline_artifacts.arn,
+          "${aws_s3_bucket.codepipeline_artifacts.arn}/*"
+        ]
+      },
+      {
+        Effect   = "Allow",
+        Action   = ["codestar-connections:UseConnection"],
+        Resource = "arn:aws:codeconnections:us-east-1:235494795848:connection/a983ec3d-ebc4-4e40-8692-d693c421c2b5" # <-- PASTE YOUR GITHUB CONNECTION ARN HERE
+      },
+      {
+        Effect   = "Allow",
+        Action   = ["codebuild:StartBuild", "codebuild:BatchGetBuilds"],
+        Resource = aws_codebuild_project.main.arn
+      },
+      {
+        Effect   = "Allow",
+        Action   = ["codedeploy:CreateDeployment", "codedeploy:GetDeploymentGroup"],
+        Resource = aws_codedeploy_deployment_group.main.id
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "codepipeline_attach" {
+  role       = aws_iam_role.codepipeline_role.name
+  policy_arn = aws_iam_policy.codepipeline_policy.arn
+}
+
+# -----------------------------------------------------------------------------
+# IAM ROLE FOR CODEBUILD
+# -----------------------------------------------------------------------------
+resource "aws_iam_role" "codebuild_role" {
+  name = "${var.project_name}-codebuild-role"
+
+  assume_role_policy = jsonencode({
+    Version   = "2012-10-17",
+    Statement = [{
+      Action    = "sts:AssumeRole",
+      Effect    = "Allow",
+      Principal = { Service = "codebuild.amazonaws.com" }
+    }]
+  })
+}
+
+# NOTE: In a real company, you would scope this down significantly.
+# For a portfolio project, AdministratorAccess is acceptable to ensure it works.
+resource "aws_iam_role_policy_attachment" "codebuild_admin" {
+  role       = aws_iam_role.codebuild_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
