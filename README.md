@@ -124,3 +124,5 @@ To destroy all project resources and stop all costs, run a single command from t
 terraform destroy
 ```
 You will also need to manually delete the S3 state bucket, the GitHub connection, and the Docker Hub secret from the AWS Console.
+
+*Note on Timing:* The initial terraform apply can take 5-10 minutes to provision all AWS resources. After it completes, the CodePipeline will start its first run, which can take another 5-10 minutes to build the container and deploy the application. Please be patient and allow *up to 15-20 minutes* for the entire process to complete before the application URL is live.
